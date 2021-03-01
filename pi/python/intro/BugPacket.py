@@ -1,7 +1,4 @@
-from abc import ABC, abstractmethod
-from queue import Queue
-
-class BugCommand(ABC):
+class BugCommand():
     def __init__(self, command):
         self.command = command
         self.setPayloadLength(0)
@@ -10,16 +7,13 @@ class BugCommand(ABC):
         for item in self.getDataTuple():
             data.extend(item)
         return data
-    def writeToQueue(self, q):
-        for item in self.getDataTuple():
-            q.put(item)
 
     # Private methods
     def getDataTuple(self):
         return (bytearray([self.command]), 
                 bytearray([self.payloadLength]), 
                 self.getCommandData())
-    @abstractmethod
+    # @abstractmethod - CircuitPython doesn't support ABC 
     def getCommandData(self):
         pass
     def getCommand(self):
@@ -42,12 +36,11 @@ class BugCommandFactory:
         return echo
     @staticmethod
     def CreateFromTuple(data):
-        # Reference the first bytearray and first element of that bytearray
-        command = data[0][0]
+        command = data[0]
         if command == 1:
-            echo = EchoCommand.Create(data[2])
+            echo = EchoCommand.fromByteArray(data[2])
         elif command == 2:
-            echo = EchoResponse.Create(data[2])
+            echo = EchoResponse.fromByteArray(data[2])
         return echo
 
     
@@ -56,12 +49,9 @@ class EchoBase(BugCommand):
         super().__init__(command)
         self.message = message
         self.setPayloadLength(len(self.message))
-    @staticmethod
-    def Create(data):
-        return EchoCommand(data.decode())
-        pass
     def getCommandData(self):
-        data = bytearray(self.message, 'utf-8')
+        encoded = self.message.encode('utf-8')
+        data = bytearray(encoded)
         return data
     def getMessage(self):
         return self.message
@@ -69,7 +59,17 @@ class EchoBase(BugCommand):
 class EchoCommand(EchoBase):
     def __init__(self, message):
         super().__init__(1, message)
+    @staticmethod
+    def fromByteArray(bits):
+        message = bits.decode('utf-8')
+        return EchoCommand(message)
+
 
 class EchoResponse(EchoBase):
     def __init__(self, message):
         super().__init__(2, message)
+    @staticmethod
+    def fromByteArray(bits):
+        message = bits.decode('utf-8')
+        return EchoResponse(message)
+

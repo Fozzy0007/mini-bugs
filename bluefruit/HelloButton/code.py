@@ -1,3 +1,4 @@
+from BugPacket import EchoCommand, EchoResponse, BugCommandFactory
 from adafruit_ble import BLERadio
 from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.nordic import UARTService
@@ -5,8 +6,6 @@ from adafruit_ble.services.nordic import UARTService
 import time
 import board
 import neopixel
-# from adafruit_bluefruit_connect.packet import Packet
-# from adafruit_bluefruit_connect.button_packet import ButtonPacket
 
 ble = BLERadio()
 uart = UARTService()
@@ -30,26 +29,27 @@ while True:
     pixels.fill(GREEN)
 
     connections = ble.connections
-    print(connections)
     device = connections[0]
 
     while ble.connected:
-        time.sleep(2)
-        uart.write("hello")
-        pass
-        # if uart.in_waiting:
-        #     packet = Packet.from_stream(uart)
-        #     if isinstance(packet, ButtonPacket):
-        #         if packet.pressed:
-        #             if packet.button == ButtonPacket.BUTTON_1:
-        #                 # The 1 button was pressed.
-        #                 print("1 button pressed!")
-        #             elif packet.button == ButtonPacket.UP:
-        #                 # The UP button was pressed.
-        #                 print("UP button pressed!")
+        if uart.in_waiting:
+            # Read the packet
+            command = int.from_bytes(uart.read(1), "little")
+            length =int.from_bytes(uart.read(1), "little")
+            data = uart.read(length)
+            tup = (command, length, data)
 
-    # If we got here, we lost the connection. Go up to the top and start
-    # advertising again and waiting for a connection.
+            # Create the command object
+            req = BugCommandFactory.CreateFromTuple(tup)
+
+            # act upon the command object
+            if isinstance(req, EchoCommand):
+                print("Will echo: " + req.getMessage())
+                res = EchoResponse(req.getMessage())
+                uart.write(res.getDataBytes())
+            elif isinstance(req, EchoResponse):
+                print("Response: " + req.getMessage())
+        pass
 
     print("Lost connection")
     pixels.fill(RED)

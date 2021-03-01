@@ -1,22 +1,8 @@
 from adafruit_ble import BLERadio
 from adafruit_ble.services.nordic import UARTService
 
+from BugPacket import BugCommandFactory, EchoCommand, EchoResponse
 import time 
-
-class Echo:
-    str=""
-    def setString(self, _str):
-        self.str = _str
-    def getString(self):
-        return self.str
-
-
-
-echo = Echo()
-echo.setString("foo")
-prStr = echo.getString()
-print(prStr)
-
 
 ble = BLERadio()
 
@@ -32,24 +18,39 @@ for advertisement in ble.start_scan():
         found.add(addr)
     else:
         continue
-    # print(addr, advertisement)
-    # print("\t" + repr(advertisement))
-    # print()
     if advertisement.complete_name == "CIRCUITPYa925":
         uart_connection = ble.connect(advertisement)
-        print("hello beetle")
+        print("connected to beetle")
         ble.stop_scan()
         break
-# connection = ble.connect("CIRCUITPYa925")
-# if ble.connected:
-#     print("connected!")
 
+# we've connected, let's make sure we have a uart connection
 if uart_connection:
     uart = uart_connection[UARTService]
-    time.sleep(3)
-    if uart.in_waiting:
-        data = uart.read(5)
-        print(data)
+    echoSent = False
+    while uart_connection.connected:
+        if uart.in_waiting:
+            # Read the packet
+            command = int.from_bytes(uart.read(1), "little")
+            length =int.from_bytes(uart.read(1), "little")
+            data = uart.read(length)
+            tup = (command, length, data)
+
+            # Create the command object
+            req = BugCommandFactory.CreateFromTuple(tup)
+            # act upon the command object
+            if isinstance(req, EchoCommand):
+                print("Will echo: " + req.getMessage())
+                res = EchoResponse(req.getMessage())
+                uart.write(res.getDataBytes())
+            elif isinstance(req, EchoResponse):
+                print("Response: " + req.getMessage())
+                break
+        elif not echoSent:
+            print("Will send an echo request")
+            echo = EchoCommand("Hello Beetle")
+            uart.write(echo.getDataBytes())
+            echoSent = True
         
 
     
