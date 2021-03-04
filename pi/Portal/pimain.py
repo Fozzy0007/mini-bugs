@@ -1,7 +1,7 @@
 from adafruit_ble import BLERadio
 from adafruit_ble.services.nordic import UARTService
 
-from BugPacket import BugCommandFactory, EchoCommand, EchoResponse
+from BugPacket import BugCommandFactory, EchoRequest, EchoResponse
 import time 
 
 ble = BLERadio()
@@ -39,7 +39,7 @@ if uart_connection:
             # Create the command object
             req = BugCommandFactory.CreateFromTuple(tup)
             # act upon the command object
-            if isinstance(req, EchoCommand):
+            if isinstance(req, EchoRequest):
                 print("Will echo: " + req.getMessage())
                 res = EchoResponse(req.getMessage())
                 uart.write(res.getDataBytes())
@@ -48,7 +48,7 @@ if uart_connection:
                 break
         elif not echoSent:
             print("Will send an echo request")
-            echo = EchoCommand("Hello Beetle")
+            echo = EchoRequest("Hello Beetle")
             uart.write(echo.getDataBytes())
             echoSent = True
         

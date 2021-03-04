@@ -1,11 +1,25 @@
-from BugPacket import EchoCommand, EchoResponse, BugCommandFactory
+from BugPacket import EchoRequest, EchoResponse, BugCommandFactory
 from adafruit_ble import BLERadio
 from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.nordic import UARTService
 
+from CpbSensorData import CpbSensorData
+
 import time
 import board
 import neopixel
+import adafruit_thermistor
+
+
+# thermistor = adafruit_thermistor.Thermistor(board.TEMPERATURE, 10000, 10000, 25, 3950)
+# temp_c = thermistor.temperature
+# temp_f = thermistor.temperature * 9 / 5 + 32
+print(dir(board))
+sensors = CpbSensorData()
+print("Temperature is: %f F" %(sensors.getTemperatureInF()))
+print("Light value is: %f " %(sensors.getLightReading()))
+print("ButtonA: %f " % (sensors.getButtonA()))
+
 
 ble = BLERadio()
 uart = UARTService()
@@ -43,8 +57,8 @@ while True:
             req = BugCommandFactory.CreateFromTuple(tup)
 
             # act upon the command object
-            if isinstance(req, EchoCommand):
-                print("Will echo: " + req.getMessage())
+            if isinstance(req, EchoRequest):
+                print("Requested to echo: " + req.getMessage())
                 res = EchoResponse(req.getMessage())
                 uart.write(res.getDataBytes())
             elif isinstance(req, EchoResponse):
