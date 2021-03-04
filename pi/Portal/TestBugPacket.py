@@ -1,11 +1,11 @@
 from BugPacket import BugCommand,BugCommandFactory
-from BugPacket import EchoCommand, EchoResponse
+from BugPacket import EchoRequest, EchoResponse
 
 from io import BytesIO
 from queue import Queue
 
 q = Queue()
-echo = EchoCommand("wow")
+echo = EchoRequest("wow")
 echo.writeToQueue(q)
 print(echo.getDataTuple())
 

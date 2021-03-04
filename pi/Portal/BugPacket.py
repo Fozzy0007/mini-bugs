@@ -30,7 +30,7 @@ class BugCommandFactory:
         length = data[1]
         paramData = data[2:]
         if command == 1:
-            echo = EchoCommand.Create(paramData)
+            echo = EchoRequest.Create(paramData)
         elif command == 2:
             echo = EchoResponse.Create(paramData)
         return echo
@@ -38,7 +38,7 @@ class BugCommandFactory:
     def CreateFromTuple(data):
         command = data[0]
         if command == 1:
-            echo = EchoCommand.fromByteArray(data[2])
+            echo = EchoRequest.fromByteArray(data[2])
         elif command == 2:
             echo = EchoResponse.fromByteArray(data[2])
         return echo
@@ -56,13 +56,13 @@ class EchoBase(BugCommand):
     def getMessage(self):
         return self.message
 
-class EchoCommand(EchoBase):
+class EchoRequest(EchoBase):
     def __init__(self, message):
         super().__init__(1, message)
     @staticmethod
     def fromByteArray(bits):
         message = bits.decode('utf-8')
-        return EchoCommand(message)
+        return EchoRequest(message)
 
 
 class EchoResponse(EchoBase):
@@ -72,4 +72,7 @@ class EchoResponse(EchoBase):
     def fromByteArray(bits):
         message = bits.decode('utf-8')
         return EchoResponse(message)
+
+
+
 
